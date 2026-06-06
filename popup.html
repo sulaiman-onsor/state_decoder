@@ -17,6 +17,35 @@
         margin: 0 0 8px;
         font-size: 15px;
       }
+      .view-controls {
+        display: flex;
+        gap: 8px;
+        margin: 0 0 10px;
+      }
+      .view-controls.hidden {
+        display: none;
+      }
+      .view-btn,
+      .copy-btn {
+        border: 1px solid #374151;
+        background: #111827;
+        color: #d1d5db;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .view-btn.active {
+        border-color: #2563eb;
+        color: #bfdbfe;
+        background: #1e3a8a;
+      }
+      .copy-btn {
+        margin-left: auto;
+      }
+      .copy-btn.hidden {
+        display: none;
+      }
       #output {
         display: grid;
         gap: 10px;
@@ -129,6 +158,11 @@
   </head>
   <body>
     <h1>State Decoder</h1>
+    <div id="viewControls" class="view-controls hidden">
+      <button id="panelsViewBtn" class="view-btn" type="button">Expansion Panel</button>
+      <button id="rawViewBtn" class="view-btn" type="button">Raw JSON</button>
+      <button id="copyRawBtn" class="copy-btn hidden" type="button">Copy Raw JSON</button>
+    </div>
     <div id="output" class="muted">Loading...</div>
     <script src="popup.js"></script>
   </body>

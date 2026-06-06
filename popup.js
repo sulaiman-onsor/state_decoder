@@ -1,5 +1,15 @@
 const DASHBOARD_PATH_REGEX =
   /^\/dashboards\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/;
+const VIEW_MODE_KEY = "state_decoder_view_mode";
+const VIEW_MODE_PANELS = "panels";
+const VIEW_MODE_RAW = "raw";
+
+const viewState = {
+  mode: localStorage.getItem(VIEW_MODE_KEY) === VIEW_MODE_RAW ? VIEW_MODE_RAW : VIEW_MODE_PANELS,
+  decoded: "",
+  parsed: null,
+  baseUrl: ""
+};
 
 function decodeBase64Value(input) {
   if (!input) return null;
@@ -41,6 +51,37 @@ function clearOutput() {
   output.innerHTML = "";
 }
 
+function setControlsVisible(visible) {
+  const controls = document.getElementById("viewControls");
+  controls.classList.toggle("hidden", !visible);
+}
+
+function syncViewButtons(canRenderPanels, canCopyRaw) {
+  const panelsBtn = document.getElementById("panelsViewBtn");
+  const rawBtn = document.getElementById("rawViewBtn");
+  const copyBtn = document.getElementById("copyRawBtn");
+
+  panelsBtn.disabled = !canRenderPanels;
+  if (!canRenderPanels && viewState.mode === VIEW_MODE_PANELS) {
+    viewState.mode = VIEW_MODE_RAW;
+  }
+
+  panelsBtn.classList.toggle("active", viewState.mode === VIEW_MODE_PANELS);
+  rawBtn.classList.toggle("active", viewState.mode === VIEW_MODE_RAW);
+  copyBtn.classList.toggle("hidden", !(viewState.mode === VIEW_MODE_RAW && canCopyRaw));
+}
+
+function getRawJsonText() {
+  if (viewState.parsed !== null) {
+    return JSON.stringify(viewState.parsed, null, 2);
+  }
+  return formatDecodedValue(viewState.decoded);
+}
+
+function persistViewMode() {
+  localStorage.setItem(VIEW_MODE_KEY, viewState.mode);
+}
+
 function setTextOutput(message, isError = false) {
   const output = document.getElementById("output");
   output.className = isError ? "error" : "muted";
@@ -49,6 +90,17 @@ function setTextOutput(message, isError = false) {
   const pre = document.createElement("pre");
   pre.className = isError ? "plain error" : "plain";
   pre.textContent = message;
+  output.appendChild(pre);
+}
+
+function setRawOutput(rawText) {
+  const output = document.getElementById("output");
+  output.className = "";
+  output.innerHTML = "";
+
+  const pre = document.createElement("pre");
+  pre.className = "plain";
+  pre.textContent = rawText;
   output.appendChild(pre);
 }
 
@@ -223,34 +275,82 @@ function renderStatePanels(states, baseUrl) {
 }
 
 function renderDecodedData(decoded, baseUrl) {
+  viewState.decoded = decoded;
+  viewState.baseUrl = baseUrl;
+
   const trimmed = decoded.trim();
   if (!trimmed) {
+    setControlsVisible(false);
     setTextOutput(decoded, false);
     return;
   }
 
   try {
-    const parsed = JSON.parse(trimmed);
-
-    if (Array.isArray(parsed)) {
-      renderStatePanels(parsed, baseUrl);
-      return;
-    }
-
-    if (parsed && typeof parsed === "object") {
-      renderStatePanels([parsed], baseUrl);
-      return;
-    }
+    viewState.parsed = JSON.parse(trimmed);
   } catch {
-    // Fall through to raw text rendering.
+    viewState.parsed = null;
   }
 
-  setTextOutput(formatDecodedValue(decoded), false);
+  const canRenderPanels =
+    Array.isArray(viewState.parsed) || (viewState.parsed !== null && typeof viewState.parsed === "object");
+
+  setControlsVisible(true);
+  syncViewButtons(canRenderPanels, true);
+
+  if (viewState.mode === VIEW_MODE_PANELS && canRenderPanels) {
+    if (Array.isArray(viewState.parsed)) {
+      renderStatePanels(viewState.parsed, baseUrl);
+      return;
+    }
+
+    renderStatePanels([viewState.parsed], baseUrl);
+    return;
+  }
+
+  setRawOutput(getRawJsonText());
 }
+
+function handleViewModeChange(mode) {
+  viewState.mode = mode;
+  persistViewMode();
+  renderDecodedData(viewState.decoded, viewState.baseUrl);
+}
+
+function wireControls() {
+  const panelsBtn = document.getElementById("panelsViewBtn");
+  const rawBtn = document.getElementById("rawViewBtn");
+  const copyBtn = document.getElementById("copyRawBtn");
+
+  panelsBtn.addEventListener("click", () => {
+    handleViewModeChange(VIEW_MODE_PANELS);
+  });
+
+  rawBtn.addEventListener("click", () => {
+    handleViewModeChange(VIEW_MODE_RAW);
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(getRawJsonText());
+      copyBtn.textContent = "Copied";
+      setTimeout(() => {
+        copyBtn.textContent = "Copy Raw JSON";
+      }, 1200);
+    } catch {
+      copyBtn.textContent = "Copy failed";
+      setTimeout(() => {
+        copyBtn.textContent = "Copy Raw JSON";
+      }, 1200);
+    }
+  });
+}
+
+wireControls();
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const activeTab = tabs[0];
   if (!activeTab || !activeTab.url) {
+    setControlsVisible(false);
     setTextOutput("No active tab URL available.", true);
     return;
   }
@@ -258,18 +358,21 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const url = new URL(activeTab.url);
   const isDashboardPath = DASHBOARD_PATH_REGEX.test(url.pathname);
   if (!isDashboardPath || !url.searchParams.has("state")) {
+    setControlsVisible(false);
     setTextOutput("No dashboard detected", true);
     return;
   }
 
   const encodedValue = url.searchParams.get("state");
   if (!encodedValue) {
+    setControlsVisible(false);
     setTextOutput("No dashboard detected", true);
     return;
   }
 
   const decoded = decodeBase64Value(encodedValue);
   if (decoded === null) {
+    setControlsVisible(false);
     setTextOutput("The parameter could not be decoded as Base64.", true);
     return;
   }
