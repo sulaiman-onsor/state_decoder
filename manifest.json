@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "State Decoder Popup",
   "version": "1.0.0",
-  "description": "Decodes a Base64 URL parameter from matching pages and shows it in the extension popup.",
+  "description": "Decodes MADA Cloud dashboard state from the URL and shows it in the extension popup.",
   "icons": {
     "16": "mada.png",
     "32": "mada.png",
