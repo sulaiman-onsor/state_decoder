@@ -3,10 +3,20 @@
   "name": "State Decoder Popup",
   "version": "1.0.0",
   "description": "Decodes a Base64 URL parameter from matching pages and shows it in the extension popup.",
+  "icons": {
+    "16": "mada.png",
+    "32": "mada.png",
+    "48": "mada.png",
+    "128": "mada.png"
+  },
   "permissions": ["storage", "tabs"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_title": "State Decoder",
+    "default_icon": {
+      "16": "mada.png",
+      "32": "mada.png"
+    },
     "default_popup": "popup.html"
   },
   "options_page": "options.html"
