@@ -159,7 +159,7 @@ function buildParamsTable(paramsValue, baseUrl) {
 
   const thead = document.createElement("thead");
   const headRow = document.createElement("tr");
-  ["param", "name", "title", "type", "id"].forEach((label) => {
+  ["Param", "Name/Value", "Title", "Type", "UUID"].forEach((label) => {
     const th = document.createElement("th");
     th.textContent = label;
     headRow.appendChild(th);
