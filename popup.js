@@ -65,7 +65,7 @@ function renderStatePanels(states) {
   output.className = "";
   output.innerHTML = "";
 
-  states.forEach((state, index) => {
+  [...states].reverse().forEach((state, index) => {
     const panel = document.createElement("details");
     panel.className = "panel";
     panel.open = index === 0;
