@@ -1,7 +1,5 @@
-const DEFAULT_SETTINGS = {
-  urlRegex: "^https?://.*$",
-  paramName: "state"
-};
+const DASHBOARD_PATH_REGEX =
+  /^\/dashboards\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/;
 
 function decodeBase64Value(input) {
   if (!input) return null;
@@ -43,40 +41,31 @@ function setOutput(message, isError = false) {
   output.className = isError ? "error" : "";
 }
 
-chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const activeTab = tabs[0];
-    if (!activeTab || !activeTab.url) {
-      setOutput("No active tab URL available.", true);
-      return;
-    }
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  const activeTab = tabs[0];
+  if (!activeTab || !activeTab.url) {
+    setOutput("No active tab URL available.", true);
+    return;
+  }
 
-    let regex;
-    try {
-      regex = new RegExp(settings.urlRegex || DEFAULT_SETTINGS.urlRegex);
-    } catch {
-      setOutput("Saved URL regex is invalid. Fix it in extension options.", true);
-      return;
-    }
+  const url = new URL(activeTab.url);
+  const isDashboardPath = DASHBOARD_PATH_REGEX.test(url.pathname);
+  if (!isDashboardPath || !url.searchParams.has("state")) {
+    setOutput("No dashboard detected", true);
+    return;
+  }
 
-    if (!regex.test(activeTab.url)) {
-      setOutput("Current page does not match the configured URL regex.", true);
-      return;
-    }
+  const encodedValue = url.searchParams.get("state");
+  if (!encodedValue) {
+    setOutput("No dashboard detected", true);
+    return;
+  }
 
-    const url = new URL(activeTab.url);
-    const encodedValue = url.searchParams.get(settings.paramName || DEFAULT_SETTINGS.paramName);
-    if (!encodedValue) {
-      setOutput(`No query parameter named \"${settings.paramName}\" was found.`, true);
-      return;
-    }
+  const decoded = decodeBase64Value(encodedValue);
+  if (decoded === null) {
+    setOutput("The parameter could not be decoded as Base64.", true);
+    return;
+  }
 
-    const decoded = decodeBase64Value(encodedValue);
-    if (decoded === null) {
-      setOutput("The parameter could not be decoded as Base64.", true);
-      return;
-    }
-
-    setOutput(formatDecodedValue(decoded), false);
-  });
+  setOutput(formatDecodedValue(decoded), false);
 });
