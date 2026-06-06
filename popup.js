@@ -172,7 +172,9 @@ function buildParamsTable(paramsValue, baseUrl) {
     const tr = document.createElement("tr");
 
     const paramTd = document.createElement("td");
-    paramTd.textContent = rowData.param;
+    const paramStrong = document.createElement("strong");
+    paramStrong.textContent = rowData.param;
+    paramTd.appendChild(paramStrong);
     tr.appendChild(paramTd);
 
     const nameTd = document.createElement("td");
