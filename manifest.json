@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "State Decoder Popup",
+  "version": "1.0.0",
+  "description": "Decodes a Base64 URL parameter from matching pages and shows it in the extension popup.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "State Decoder",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html"
+}

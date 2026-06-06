@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>State Decoder Options</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        max-width: 720px;
+        margin: 24px auto;
+        padding: 0 16px;
+        color: #1f2937;
+      }
+      h1 {
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 14px;
+        padding: 8px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+      }
+      button {
+        border: 0;
+        border-radius: 8px;
+        background: #1d4ed8;
+        color: #fff;
+        padding: 8px 14px;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 10px;
+        color: #065f46;
+      }
+      .hint {
+        color: #4b5563;
+        font-size: 13px;
+        margin-top: -8px;
+        margin-bottom: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>State Decoder Options</h1>
+
+    <label for="urlRegex">URL Regex</label>
+    <input id="urlRegex" type="text" placeholder="^https?://example\\.com/.*$" />
+    <div class="hint">The popup appears only on pages matching this regex.</div>
+
+    <label for="paramName">Query Parameter Name</label>
+    <input id="paramName" type="text" placeholder="state" />
+    <div class="hint">The extension decodes this Base64-encoded query parameter.</div>
+
+    <button id="save" type="button">Save</button>
+    <div id="status"></div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
