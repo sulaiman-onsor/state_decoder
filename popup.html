@@ -17,7 +17,66 @@
         margin: 0 0 8px;
         font-size: 15px;
       }
-      pre {
+      #output {
+        display: grid;
+        gap: 10px;
+      }
+      .panel {
+        background: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 10px;
+        padding: 0;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+      }
+      .panel-toggle {
+        list-style: none;
+        cursor: pointer;
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #f9fafb;
+        word-break: break-word;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .panel-toggle::-webkit-details-marker {
+        display: none;
+      }
+      .panel-toggle::after {
+        content: "+";
+        color: #93c5fd;
+        font-size: 14px;
+        line-height: 1;
+        flex: 0 0 auto;
+      }
+      .panel[open] .panel-toggle::after {
+        content: "−";
+      }
+      .panel-body {
+        display: grid;
+        gap: 8px;
+        font-size: 12px;
+        line-height: 1.45;
+        padding: 0 12px 12px;
+      }
+      .field {
+        display: grid;
+        gap: 2px;
+      }
+      .field-key {
+        color: #93c5fd;
+        font-weight: 600;
+        text-transform: none;
+      }
+      .field-value {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #e5e7eb;
+      }
+      .plain {
         margin: 0;
         background: #1f2937;
         border: 1px solid #374151;
@@ -25,8 +84,6 @@
         padding: 10px;
         white-space: pre-wrap;
         word-break: break-word;
-        max-height: 280px;
-        overflow: auto;
         font-size: 12px;
       }
       .muted {
@@ -39,7 +96,7 @@
   </head>
   <body>
     <h1>State Decoder</h1>
-    <pre id="output" class="muted">Loading...</pre>
+    <div id="output" class="muted">Loading...</div>
     <script src="popup.js"></script>
   </body>
 </html>
