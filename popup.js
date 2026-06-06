@@ -60,7 +60,108 @@ function renderValue(value) {
   return String(value);
 }
 
-function renderStatePanels(states) {
+function extractParamRow(paramKey, paramValue) {
+  if (paramValue && typeof paramValue === "object" && !Array.isArray(paramValue)) {
+    const entityId = paramValue.entityId && typeof paramValue.entityId === "object" ? paramValue.entityId : null;
+    const rawType = entityId?.entityType || "";
+    const linkType = rawType === "DEVICE" ? "devices" : rawType === "ASSET" ? "assets" : "";
+
+    return {
+      param: paramKey,
+      name: paramValue.entityName || "",
+      title: paramValue.entityLabel || "",
+      type: linkType,
+      id: entityId?.id || ""
+    };
+  }
+
+  return {
+    param: paramKey,
+    name: String(paramValue ?? ""),
+    title: "",
+    type: "",
+    id: ""
+  };
+}
+
+function shortenId(id) {
+  if (!id || id.length <= 12) {
+    return id;
+  }
+  return `${id.slice(0, 8)}...${id.slice(-4)}`;
+}
+
+function buildParamsTable(paramsValue, baseUrl) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "field";
+
+  const keyEl = document.createElement("div");
+  keyEl.className = "field-key";
+  keyEl.textContent = "params";
+
+  const tableWrap = document.createElement("div");
+  tableWrap.className = "table-wrap";
+
+  const table = document.createElement("table");
+  table.className = "params-table";
+
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  ["param", "name", "title", "type", "id"].forEach((label) => {
+    const th = document.createElement("th");
+    th.textContent = label;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+
+  const tbody = document.createElement("tbody");
+  Object.entries(paramsValue || {}).forEach(([paramKey, paramValue]) => {
+    const rowData = extractParamRow(paramKey, paramValue);
+    const tr = document.createElement("tr");
+
+    const paramTd = document.createElement("td");
+    paramTd.textContent = rowData.param;
+    tr.appendChild(paramTd);
+
+    const nameTd = document.createElement("td");
+    nameTd.textContent = rowData.name;
+    tr.appendChild(nameTd);
+
+    const titleTd = document.createElement("td");
+    titleTd.textContent = rowData.title;
+    tr.appendChild(titleTd);
+
+    const typeTd = document.createElement("td");
+    typeTd.textContent = rowData.type;
+    tr.appendChild(typeTd);
+
+    const idTd = document.createElement("td");
+    if (rowData.id && rowData.type && baseUrl) {
+      const link = document.createElement("a");
+      link.className = "id-link";
+      link.href = `${baseUrl}/entities/${rowData.type}/${rowData.id}`;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = shortenId(rowData.id);
+      idTd.appendChild(link);
+    } else {
+      idTd.textContent = shortenId(rowData.id);
+    }
+    tr.appendChild(idTd);
+
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  wrapper.appendChild(keyEl);
+  wrapper.appendChild(tableWrap);
+
+  return wrapper;
+}
+
+function renderStatePanels(states, baseUrl) {
   const output = document.getElementById("output");
   output.className = "";
   output.innerHTML = "";
@@ -93,6 +194,11 @@ function renderStatePanels(states) {
           return;
         }
 
+        if (key === "params" && value && typeof value === "object" && !Array.isArray(value)) {
+          body.appendChild(buildParamsTable(value, baseUrl));
+          return;
+        }
+
         const field = document.createElement("div");
         field.className = "field";
 
@@ -116,7 +222,7 @@ function renderStatePanels(states) {
   });
 }
 
-function renderDecodedData(decoded) {
+function renderDecodedData(decoded, baseUrl) {
   const trimmed = decoded.trim();
   if (!trimmed) {
     setTextOutput(decoded, false);
@@ -127,12 +233,12 @@ function renderDecodedData(decoded) {
     const parsed = JSON.parse(trimmed);
 
     if (Array.isArray(parsed)) {
-      renderStatePanels(parsed);
+      renderStatePanels(parsed, baseUrl);
       return;
     }
 
     if (parsed && typeof parsed === "object") {
-      renderStatePanels([parsed]);
+      renderStatePanels([parsed], baseUrl);
       return;
     }
   } catch {
@@ -168,5 +274,5 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     return;
   }
 
-  renderDecodedData(decoded);
+  renderDecodedData(decoded, url.origin);
 });
